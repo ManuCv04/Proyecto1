@@ -1,350 +1,812 @@
 <!doctype html>
+
 <html lang="es">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Sistema de Turnos</title>
-    <style>
-      :root {
-        --bg1: #0b1220;
-        --bg2: #0f172a;
-        --card: rgba(255, 255, 255, 0.08);
-        --card2: rgba(255, 255, 255, 0.06);
-        --border: rgba(255, 255, 255, 0.12);
-        --text: rgba(255, 255, 255, 0.9);
-        --muted: rgba(255, 255, 255, 0.65);
-        --primary: #7c3aed;
-        --primary2: #22c55e;
-        --warning: #f59e0b;
-        --danger: #ef4444;
+
+<head>
+
+  <meta charset="utf-8" />
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1"
+  />
+
+  <title>Sistema Hospitalario</title>
+
+  <style>
+
+    :root {
+
+      --bg1: #07111f;
+      --bg2: #0f172a;
+
+      --card: rgba(255,255,255,.06);
+
+      --border: rgba(255,255,255,.12);
+
+      --text: rgba(255,255,255,.92);
+
+      --muted: rgba(255,255,255,.65);
+    }
+
+    *{
+      box-sizing:border-box;
+    }
+
+    body{
+
+      margin:0;
+
+      min-height:100vh;
+
+      font-family:
+        system-ui,
+        sans-serif;
+
+      background:
+        radial-gradient(
+          circle at top left,
+          rgba(99,102,241,.35),
+          transparent 35%
+        ),
+
+        radial-gradient(
+          circle at top right,
+          rgba(34,197,94,.25),
+          transparent 35%
+        ),
+
+        linear-gradient(
+          135deg,
+          var(--bg1),
+          var(--bg2)
+        );
+
+      color:var(--text);
+
+      padding:30px;
+    }
+
+    .container{
+
+      max-width:1200px;
+
+      margin:auto;
+    }
+
+    .shell{
+
+      background:rgba(255,255,255,.05);
+
+      backdrop-filter:blur(12px);
+
+      border:1px solid rgba(255,255,255,.12);
+
+      border-radius:24px;
+
+      padding:24px;
+    }
+
+    .title{
+
+      font-size:38px;
+
+      font-weight:800;
+    }
+
+    .subtitle{
+
+      color:var(--muted);
+
+      margin-top:8px;
+    }
+
+    .grid{
+
+      display:grid;
+
+      grid-template-columns:1fr 1fr;
+
+      gap:18px;
+
+      margin-top:20px;
+    }
+
+    .card{
+
+      background:rgba(255,255,255,.06);
+
+      border:1px solid rgba(255,255,255,.1);
+
+      border-radius:20px;
+
+      padding:18px;
+    }
+
+    input,
+    select{
+
+      width:100%;
+
+      padding:14px;
+
+      border-radius:14px;
+
+      border:none;
+
+      margin-top:12px;
+
+      background:rgba(0,0,0,.2);
+
+      color:white;
+    }
+
+    button{
+
+      border:none;
+
+      border-radius:14px;
+
+      padding:14px;
+
+      cursor:pointer;
+
+      font-weight:700;
+    }
+
+    .btn-primary{
+
+      background:#4f46e5;
+
+      color:white;
+    }
+
+    .btn-start{
+
+      width:100%;
+
+      background:#22c55e;
+
+      color:white;
+
+      font-size:18px;
+
+      margin-top:20px;
+    }
+
+    .btn-stop{
+
+      width:100%;
+
+      background:#ef4444;
+
+      color:white;
+
+      font-size:18px;
+
+      margin-top:10px;
+    }
+
+    .btn-save{
+
+      width:100%;
+
+      background:#2563eb;
+
+      color:white;
+    }
+
+    .btn-load{
+
+      width:100%;
+
+      background:#9333ea;
+
+      color:white;
+    }
+
+    .list{
+
+      list-style:none;
+
+      padding:0;
+
+      display:grid;
+
+      gap:12px;
+    }
+
+    .item{
+
+      background:rgba(0,0,0,.18);
+
+      padding:14px;
+
+      border-radius:16px;
+
+      display:flex;
+
+      justify-content:space-between;
+
+      align-items:center;
+    }
+
+    .tag{
+
+      padding:6px 12px;
+
+      border-radius:999px;
+
+      font-size:12px;
+
+      font-weight:700;
+    }
+
+    .alta{
+
+      background:#ef4444;
+    }
+
+    .media{
+
+      background:#f59e0b;
+
+      color:black;
+    }
+
+    .baja{
+
+      background:#22c55e;
+    }
+
+    .contador{
+
+      font-size:24px;
+
+      margin-top:12px;
+
+      color:#22c55e;
+
+      font-weight:bold;
+    }
+
+    .meta{
+
+      color:rgba(255,255,255,.7);
+
+      margin-top:6px;
+
+      font-size:13px;
+    }
+
+    .flash{
+
+      margin-top:20px;
+
+      padding:14px;
+
+      border-radius:14px;
+
+      background:rgba(34,197,94,.2);
+    }
+
+    @media(max-width:900px){
+
+      .grid{
+        grid-template-columns:1fr;
       }
 
-      * {
-        box-sizing: border-box;
-      }
+    }
 
-      body {
-        margin: 0;
-        padding: 28px 16px;
-        min-height: 100svh;
-        display: grid;
-        place-items: center;
-        font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-        color: var(--text);
-        background: radial-gradient(1200px circle at 15% 10%, rgba(124, 58, 237, 0.45), transparent 55%),
-          radial-gradient(900px circle at 85% 15%, rgba(34, 197, 94, 0.35), transparent 55%),
-          linear-gradient(140deg, var(--bg1), var(--bg2));
-      }
+  </style>
 
-      .container {
-        width: min(980px, 100%);
-      }
+</head>
 
-      .shell {
-        border: 1px solid var(--border);
-        background: linear-gradient(180deg, var(--card), var(--card2));
-        border-radius: 18px;
-        box-shadow: 0 25px 60px rgba(0, 0, 0, 0.35);
-        padding: 20px;
-        backdrop-filter: blur(10px);
-      }
+<body>
 
-      header {
-        display: flex;
-        justify-content: space-between;
-        align-items: flex-start;
-        gap: 12px;
-        margin-bottom: 18px;
-      }
+<div class="container">
 
-      .title {
-        margin: 0;
-        font-size: 20px;
-        line-height: 1.2;
-        letter-spacing: 0.2px;
-      }
+<div class="shell">
 
-      .subtitle {
-        margin: 6px 0 0;
-        color: var(--muted);
-        font-size: 13px;
-      }
+  <div class="title">
+    🏥 Sistema Hospitalario
+  </div>
 
-      .pill {
-        border: 1px solid var(--border);
-        color: var(--muted);
-        padding: 8px 10px;
-        border-radius: 999px;
-        font-size: 12px;
-        white-space: nowrap;
-      }
+  <div class="subtitle">
+    Simulación médica en tiempo real
+  </div>
 
-      .flash-list {
-        display: grid;
-        gap: 10px;
-        margin: 0 0 16px;
-      }
+  <!-- INICIAR -->
 
-      .flash {
-        padding: 12px 12px;
-        border-radius: 12px;
-        border: 1px solid var(--border);
-        background: rgba(255, 255, 255, 0.06);
-      }
+  <form
+    action="{{ url_for('turnos.iniciar_simulacion') }}"
+    method="post"
+  >
 
-      .flash.success {
-        border-color: rgba(34, 197, 94, 0.35);
-      }
-      .flash.warning {
-        border-color: rgba(245, 158, 11, 0.35);
-      }
-      .flash.error {
-        border-color: rgba(239, 68, 68, 0.35);
-      }
+    <button
+      type="submit"
+      class="btn-start"
+    >
+      ▶️ Iniciar Atención
+    </button>
 
-      .grid {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 14px;
-      }
+  </form>
 
-      .card {
-        border: 1px solid var(--border);
-        background: rgba(255, 255, 255, 0.06);
-        border-radius: 16px;
-        padding: 14px;
-      }
+  <!-- DETENER -->
 
-      .card h2 {
-        margin: 0 0 10px;
-        font-size: 14px;
-        letter-spacing: 0.2px;
-        color: rgba(255, 255, 255, 0.88);
-      }
+  <form
+    action="{{ url_for('turnos.detener_simulacion') }}"
+    method="post"
+  >
 
-      .row {
-        display: flex;
-        gap: 10px;
-        flex-wrap: wrap;
-        align-items: center;
-      }
+    <button
+      type="submit"
+      class="btn-stop"
+    >
+      ⏹️ Detener Atención
+    </button>
 
-      input {
-        width: 100%;
-        padding: 12px 12px;
-        border-radius: 12px;
-        border: 1px solid var(--border);
-        background: rgba(0, 0, 0, 0.18);
-        color: var(--text);
-        outline: none;
-      }
+  </form>
 
-      input::placeholder {
-        color: rgba(255, 255, 255, 0.5);
-      }
+  <!-- GUARDAR / CARGAR -->
 
-      input:focus {
-        border-color: rgba(124, 58, 237, 0.55);
-        box-shadow: 0 0 0 4px rgba(124, 58, 237, 0.18);
-      }
+  <div
+    style="
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:10px;
+      margin-top:14px;
+    "
+  >
 
-      button {
-        padding: 11px 12px;
-        border-radius: 12px;
-        border: 1px solid var(--border);
-        background: rgba(255, 255, 255, 0.07);
-        color: var(--text);
-        font-weight: 700;
-        cursor: pointer;
-        transition: transform 0.05s ease, background 0.2s ease, border-color 0.2s ease;
-      }
+    <form
+      action="{{ url_for('turnos.guardar_estado') }}"
+      method="post"
+    >
 
-      button:hover {
-        background: rgba(255, 255, 255, 0.1);
-      }
+      <button
+        type="submit"
+        class="btn-save"
+      >
+        💾 Guardar Estado
+      </button>
 
-      button:active {
-        transform: translateY(1px);
-      }
+    </form>
 
-      .btn-primary {
-        border-color: rgba(124, 58, 237, 0.45);
-        background: linear-gradient(180deg, rgba(124, 58, 237, 0.85), rgba(124, 58, 237, 0.55));
-      }
+    <form
+      action="{{ url_for('turnos.cargar_estado') }}"
+      method="post"
+    >
 
-      .btn-priority {
-        border-color: rgba(245, 158, 11, 0.45);
-        background: linear-gradient(180deg, rgba(245, 158, 11, 0.85), rgba(245, 158, 11, 0.55));
-      }
+      <button
+        type="submit"
+        class="btn-load"
+      >
+        📂 Cargar Estado
+      </button>
 
-      .btn-next {
-        width: 100%;
-        border-color: rgba(34, 197, 94, 0.45);
-        background: linear-gradient(180deg, rgba(34, 197, 94, 0.88), rgba(34, 197, 94, 0.55));
-        font-size: 15px;
-      }
+    </form>
 
-      .btn-ghost {
-        background: rgba(255, 255, 255, 0.06);
-      }
+  </div>
 
-      .meta {
-        margin-top: 10px;
-        color: var(--muted);
-        font-size: 12px;
-        line-height: 1.4;
-      }
+  {% with messages = get_flashed_messages(with_categories=true) %}
 
-      .list {
-        display: grid;
-        gap: 10px;
-        margin: 0;
-        padding: 0;
-        list-style: none;
-      }
+    {% if messages %}
 
-      .item {
-        display: flex;
-        justify-content: space-between;
-        gap: 10px;
-        align-items: center;
-        padding: 10px 10px;
-        border-radius: 14px;
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        background: rgba(0, 0, 0, 0.14);
-      }
+      {% for category, message in messages %}
 
-      .id {
-        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New",
-          monospace;
-        font-size: 12px;
-        padding: 3px 8px;
-        border-radius: 999px;
-        border: 1px solid rgba(124, 58, 237, 0.45);
-        background: rgba(124, 58, 237, 0.15);
-        margin-right: 8px;
-        display: inline-block;
-      }
+        <div class="flash">
+          {{ message }}
+        </div>
 
-      .tag {
-        font-size: 12px;
-        padding: 3px 8px;
-        border-radius: 999px;
-        border: 1px solid rgba(245, 158, 11, 0.4);
-        background: rgba(245, 158, 11, 0.16);
-        color: rgba(255, 255, 255, 0.9);
-        white-space: nowrap;
-      }
+      {% endfor %}
 
-      .empty {
-        margin: 0;
-        padding: 14px 10px;
-        text-align: center;
-        color: var(--muted);
-        border-radius: 14px;
-        border: 1px dashed rgba(255, 255, 255, 0.14);
-        background: rgba(0, 0, 0, 0.12);
-      }
+    {% endif %}
 
-      @media (max-width: 820px) {
-        body {
-          place-items: start center;
-        }
+  {% endwith %}
 
-        .grid {
-          grid-template-columns: 1fr;
-        }
-      }
-    </style>
-  </head>
-  <body>
-    <div class="container">
-      <div class="shell">
-        <header>
+  <!-- PACIENTE ACTUAL -->
+
+  <div class="card" style="margin-top:20px;">
+
+    <h2>
+      🚑 Paciente en atención
+    </h2>
+
+    <div id="paciente-actual">
+
+      {% if paciente_actual %}
+
+        <div class="item">
+
           <div>
-            <h1 class="title">=== Sistema de Turnos - {{ nombre_servicio }} ===</h1>
-            <p class="subtitle">Cola prioritaria primero, cola normal FIFO y historial tipo pila.</p>
-          </div>
-          <div class="pill">Web MVC (Flask + Jinja2)</div>
-        </header>
 
-        {% with messages = get_flashed_messages(with_categories=true) %}
-          {% if messages %}
-            <div class="flash-list">
-              {% for category, message in messages %}
-                <div class="flash {{ category }}">{{ message }}</div>
-              {% endfor %}
+            <strong>
+              {{ paciente_actual.nombre }}
+            </strong>
+
+            <div class="meta">
+              {{ paciente_actual.categoria }}
             </div>
-          {% endif %}
-        {% endwith %}
 
-        <form action="{{ url_for('turnos.atender_siguiente') }}" method="post">
-          <button type="submit" class="btn-next">3. Atender siguiente</button>
-        </form>
-
-        <div class="grid" style="margin-top: 14px">
-          <div class="card">
-            <h2>Tomar turno</h2>
-            <form action="{{ url_for('turnos.tomar_turno') }}" method="post" style="display: grid; gap: 10px">
-              <input type="text" name="nombre" placeholder="Nombre del cliente" required />
-              <div class="row">
-                <button type="submit" class="btn-primary">1. Turno normal</button>
-                <button type="submit" name="prioritario" value="true" class="btn-priority">2. Turno prioritario</button>
-              </div>
-              <div class="meta">Se asigna T-### o P-### de forma incremental.</div>
-            </form>
           </div>
 
-          <div class="card">
-            <h2>Estado</h2>
-            <div class="row">
-              <form action="{{ url_for('turnos.guardar_estado') }}" method="post">
-                <button type="submit" class="btn-ghost">6. Guardar estado</button>
-              </form>
-              <form action="{{ url_for('turnos.cargar_estado') }}" method="post">
-                <button type="submit" class="btn-ghost">Cargar estado</button>
-              </form>
-            </div>
-            <div class="meta">Persistencia JSON en data/estado_turnos.json</div>
-          </div>
+          <span
+            class="tag {{ paciente_actual.prioridad }}"
+          >
+            {{ paciente_actual.prioridad.upper() }}
+          </span>
+
         </div>
 
-        <div class="grid" style="margin-top: 14px">
-          <div class="card">
-            <h2>4. Cola actual</h2>
-            {% if cola %}
-              <ul class="list">
-                {% for item in cola %}
-                  <li class="item">
-                    <span><span class="id">{{ item.turno }}</span>{{ item.nombre }}</span>
-                    {% if item.prioritario %}
-                      <span class="tag">PRIORIDAD</span>
-                    {% endif %}
-                  </li>
-                {% endfor %}
-              </ul>
-            {% else %}
-              <p class="empty">No hay turnos en espera.</p>
-            {% endif %}
-          </div>
+      {% else %}
 
-          <div class="card">
-            <h2>5. Historial (ultimos 10)</h2>
-            {% if historial %}
-              <ul class="list">
-                {% for item in historial %}
-                  <li class="item">
-                    <span><span class="id">{{ item.turno }}</span>{{ item.nombre }}</span>
-                    <span style="color: var(--muted); font-size: 12px; white-space: nowrap">{{ item.hora_atencion }}</span>
-                  </li>
-                {% endfor %}
-              </ul>
-            {% else %}
-              <p class="empty">No hay historial todavia.</p>
-            {% endif %}
-          </div>
+        <div class="meta">
+          No hay pacientes siendo atendidos.
         </div>
-      </div>
+
+      {% endif %}
+
     </div>
-  </body>
+
+    <div
+      class="contador"
+      id="contador"
+    >
+      Tiempo restante:
+      {{ tiempo_restante }}s
+    </div>
+
+  </div>
+
+  <div class="grid">
+
+    <!-- REGISTRO -->
+
+    <div class="card">
+
+      <h2>
+        📝 Registrar paciente
+      </h2>
+
+      <form
+        action="{{ url_for('turnos.tomar_turno') }}"
+        method="post"
+      >
+
+        <input
+          type="text"
+          name="nombre"
+          placeholder="Nombre del paciente"
+          required
+        />
+
+        <select
+          name="prioridad"
+          required
+        >
+
+          <option value="">
+            Seleccione prioridad
+          </option>
+
+          <option value="alta">
+            🔴 Alta
+          </option>
+
+          <option value="media">
+            🟠 Media
+          </option>
+
+          <option value="baja">
+            🟢 Baja
+          </option>
+
+        </select>
+
+        <select
+          name="categoria"
+          required
+        >
+
+          <option value="">
+            Seleccione categoría médica
+          </option>
+
+          <optgroup label="🔴 Prioridad Alta">
+
+            <option>
+              Mujeres embarazadas con signos de riesgo
+            </option>
+
+            <option>
+              Adultos mayores vulnerables
+            </option>
+
+            <option>
+              Pacientes en estado crítico
+            </option>
+
+            <option>
+              Niños menores con síntomas graves
+            </option>
+
+            <option>
+              Víctimas de accidentes o trauma
+            </option>
+
+          </optgroup>
+
+          <optgroup label="🟠 Prioridad Media">
+
+            <option>
+              Pacientes con síntomas moderados
+            </option>
+
+            <option>
+              Personas con enfermedades crónicas
+            </option>
+
+            <option>
+              Embarazadas sin complicaciones graves
+            </option>
+
+            <option>
+              Pacientes que requieren evaluación pronta
+            </option>
+
+          </optgroup>
+
+          <optgroup label="🟢 Prioridad Baja">
+
+            <option>
+              Pacientes estables
+            </option>
+
+            <option>
+              Personas con molestias leves
+            </option>
+
+            <option>
+              Controles preventivos y seguimiento médico
+            </option>
+
+            <option>
+              Consultas ambulatorias programadas
+            </option>
+
+          </optgroup>
+
+        </select>
+
+        <button
+          type="submit"
+          class="btn-primary"
+          style="margin-top:14px;width:100%;"
+        >
+          Registrar paciente
+        </button>
+
+      </form>
+
+    </div>
+
+    <!-- COLA -->
+
+    <div class="card">
+
+      <h2>
+        ⏳ Cola de espera
+      </h2>
+
+      <ul
+        class="list"
+        id="cola"
+      >
+
+        {% for item in cola %}
+
+          <li class="item">
+
+            <div>
+
+              <strong>
+                {{ item.nombre }}
+              </strong>
+
+              <div class="meta">
+                {{ item.categoria }}
+              </div>
+
+            </div>
+
+            <span
+              class="tag {{ item.prioridad }}"
+            >
+              {{ item.prioridad.upper() }}
+            </span>
+
+          </li>
+
+        {% endfor %}
+
+      </ul>
+
+    </div>
+
+  </div>
+
+  <!-- HISTORIAL -->
+
+  <div
+    class="card"
+    style="margin-top:20px;"
+  >
+
+    <h2>
+      📋 Historial
+    </h2>
+
+    <ul
+      class="list"
+      id="historial"
+    >
+
+      {% for item in historial %}
+
+        <li class="item">
+
+          <div>
+
+            <strong>
+              {{ item.nombre }}
+            </strong>
+
+            <div class="meta">
+              Atendido:
+              {{ item.hora_atencion }}
+            </div>
+
+          </div>
+
+          <span
+            class="tag {{ item.prioridad }}"
+          >
+            {{ item.prioridad.upper() }}
+          </span>
+
+        </li>
+
+      {% endfor %}
+
+    </ul>
+
+  </div>
+
+</div>
+
+</div>
+
+<script>
+
+async function actualizarSistema() {
+
+    const response = await fetch("/api/estado")
+
+    const data = await response.json()
+
+    const contador =
+        document.getElementById("contador")
+
+    contador.innerHTML =
+        `Tiempo restante: ${data.tiempo_restante}s`
+
+    // PACIENTE ACTUAL
+
+    const paciente =
+        document.getElementById("paciente-actual")
+
+    if (data.paciente_actual) {
+
+        paciente.innerHTML = `
+
+            <div class="item">
+
+                <div>
+
+                    <strong>
+                        ${data.paciente_actual.nombre}
+                    </strong>
+
+                    <div class="meta">
+                        ${data.paciente_actual.categoria}
+                    </div>
+
+                </div>
+
+                <span class="tag ${data.paciente_actual.prioridad}">
+                    ${data.paciente_actual.prioridad.toUpperCase()}
+                </span>
+
+            </div>
+        `
+    }
+
+    // COLA
+
+    const cola =
+        document.getElementById("cola")
+
+    cola.innerHTML = ""
+
+    data.cola.forEach(item => {
+
+        cola.innerHTML += `
+
+            <li class="item">
+
+                <div>
+
+                    <strong>
+                        ${item.nombre}
+                    </strong>
+
+                    <div class="meta">
+                        ${item.categoria}
+                    </div>
+
+                </div>
+
+                <span class="tag ${item.prioridad}">
+                    ${item.prioridad.toUpperCase()}
+                </span>
+
+            </li>
+        `
+    })
+
+    // HISTORIAL
+
+    const historial =
+        document.getElementById("historial")
+
+    historial.innerHTML = ""
+
+    data.historial.forEach(item => {
+
+        historial.innerHTML += `
+
+            <li class="item">
+
+                <div>
+
+                    <strong>
+                        ${item.nombre}
+                    </strong>
+
+                    <div class="meta">
+                        Atendido:
+                        ${item.hora_atencion}
+                    </div>
+
+                </div>
+
+                <span class="tag ${item.prioridad}">
+                    ${item.prioridad.toUpperCase()}
+                </span>
+
+            </li>
+        `
+    })
+}
+
+setInterval(
+    actualizarSistema,
+    1000
+)
+
+</script>
+
+</body>
+
 </html>

@@ -1,5 +1,3 @@
-"""Modelo de dominio para gestionar turnos en una institucion."""
-
 from __future__ import annotations
 
 from collections import deque
@@ -10,113 +8,228 @@ from typing import Deque
 
 
 class SistemaGestionTurnos:
-    """
-    Sistema de turnos con cola normal y cola prioritaria.
-
-    La cola prioritaria siempre se atiende antes que la normal.
-    """
 
     def __init__(self, nombre_servicio: str):
-        if not nombre_servicio or not nombre_servicio.strip():
-            raise ValueError("El nombre del servicio no puede estar vacio.")
 
-        self.nombre_servicio = nombre_servicio.strip()
-        self._cola_normal: Deque[dict] = deque()
-        self._cola_prioritaria: Deque[dict] = deque()
-        self._historial_atendidos: list[dict] = []
-        self._contador_normal = 0
-        self._contador_prioritario = 0
+        self.nombre_servicio = nombre_servicio
 
-    def tomar_turno(self, nombre: str, prioritario: bool = False) -> str:
-        """
-        Asigna un numero de turno al cliente.
+        self._cola_alta: Deque[dict] = deque()
+        self._cola_media: Deque[dict] = deque()
+        self._cola_baja: Deque[dict] = deque()
 
-        Retorna el numero asignado (ej: 'T-001' o 'P-001' para prioritario).
-        """
-        if not nombre or not nombre.strip():
-            raise ValueError("El nombre del cliente no puede estar vacio.")
+        self._historial_atendidos = []
 
-        nombre_limpio = nombre.strip()
-        if prioritario:
-            self._contador_prioritario += 1
-            numero = f"P-{self._contador_prioritario:03d}"
-        else:
-            self._contador_normal += 1
-            numero = f"T-{self._contador_normal:03d}"
+        self._contador = 0
 
-        turno = {
+        self.paciente_actual = None
+
+        self.tiempo_restante = 0
+
+        self.simulacion_activa = False
+
+    def tomar_turno(
+        self,
+        nombre: str,
+        prioridad: str,
+        categoria: str,
+    ):
+
+        self._contador += 1
+
+        numero = f"T-{self._contador:03d}"
+
+        paciente = {
+
             "turno": numero,
-            "nombre": nombre_limpio,
-            "prioritario": prioritario,
-            "hora_toma": datetime.now().isoformat(timespec="seconds"),
+
+            "nombre": nombre,
+
+            "prioridad": prioridad,
+
+            "categoria": categoria,
+
+            "hora_toma":
+                datetime.now().strftime("%H:%M:%S"),
+
         }
 
-        if prioritario:
-            self._cola_prioritaria.append(turno)
+        if prioridad == "alta":
+
+            self._cola_alta.append(paciente)
+
+        elif prioridad == "media":
+
+            self._cola_media.append(paciente)
+
         else:
-            self._cola_normal.append(turno)
+
+            self._cola_baja.append(paciente)
 
         return numero
 
-    def atender_siguiente(self) -> dict | None:
-        """
-        Atiende al siguiente cliente (prioritario primero).
+    def iniciar_simulacion(self):
 
-        Retorna datos del cliente atendido, o None si no hay turnos.
-        """
-        if self._cola_prioritaria:
-            atendido = self._cola_prioritaria.popleft()
-        elif self._cola_normal:
-            atendido = self._cola_normal.popleft()
+        self.simulacion_activa = True
+
+        if self.paciente_actual is None:
+
+            self.iniciar_atencion()
+
+    def detener_simulacion(self):
+
+        self.simulacion_activa = False
+
+    def iniciar_atencion(self):
+
+        paciente = None
+
+        # PRIORIDAD REAL
+
+        if self._cola_alta:
+
+            paciente = self._cola_alta.popleft()
+
+        elif self._cola_media:
+
+            paciente = self._cola_media.popleft()
+
+        elif self._cola_baja:
+
+            paciente = self._cola_baja.popleft()
+
+        if paciente is None:
+            return
+
+        self.paciente_actual = paciente
+
+        # TIEMPO SEGÚN PRIORIDAD
+
+        if paciente["prioridad"] == "alta":
+
+            self.tiempo_restante = 15
+
+        elif paciente["prioridad"] == "media":
+
+            self.tiempo_restante = 10
+
         else:
-            return None
 
-        atendido["hora_atencion"] = datetime.now().isoformat(timespec="seconds")
-        self._historial_atendidos.append(atendido)
-        return atendido
+            self.tiempo_restante = 5
 
-    def ver_cola(self) -> list:
-        """Retorna la lista de turnos pendientes."""
-        return list(self._cola_prioritaria) + list(self._cola_normal)
+    def actualizar_simulacion(self):
 
-    def historial(self, n: int = 10) -> list:
-        """Retorna los ultimos n atendidos (desde la pila de historial)."""
-        if n <= 0:
-            return []
-        return list(reversed(self._historial_atendidos[-n:]))
+        if not self.simulacion_activa:
+            return
 
-    def guardar_estado(self, archivo: str) -> None:
-        """Persiste el estado completo en JSON."""
+        if self.paciente_actual is None:
+
+            self.iniciar_atencion()
+            return
+
+        self.tiempo_restante -= 1
+
+        if self.tiempo_restante <= 0:
+
+            self.paciente_actual[
+                "hora_atencion"
+            ] = datetime.now().strftime("%H:%M:%S")
+
+            self._historial_atendidos.append(
+                self.paciente_actual
+            )
+
+            self.paciente_actual = None
+
+            self.iniciar_atencion()
+
+    def ver_cola(self):
+
+        return (
+
+            list(self._cola_alta)
+
+            + list(self._cola_media)
+
+            + list(self._cola_baja)
+
+        )
+
+    def historial(self, n=10):
+
+        return list(
+            reversed(
+                self._historial_atendidos[-n:]
+            )
+        )
+
+    def guardar_estado(self, archivo):
+
         ruta = Path(archivo)
-        if ruta.parent and not ruta.parent.exists():
-            ruta.parent.mkdir(parents=True, exist_ok=True)
 
         data = {
-            "nombre_servicio": self.nombre_servicio,
-            "contador_normal": self._contador_normal,
-            "contador_prioritario": self._contador_prioritario,
-            "cola_normal": list(self._cola_normal),
-            "cola_prioritaria": list(self._cola_prioritaria),
-            "historial_atendidos": self._historial_atendidos,
+
+            "nombre_servicio":
+                self.nombre_servicio,
+
+            "contador":
+                self._contador,
+
+            "cola_alta":
+                list(self._cola_alta),
+
+            "cola_media":
+                list(self._cola_media),
+
+            "cola_baja":
+                list(self._cola_baja),
+
+            "historial":
+                self._historial_atendidos,
+
         }
 
-        with ruta.open("w", encoding="utf-8") as f:
-            json.dump(data, f, ensure_ascii=False, indent=2)
+        with ruta.open(
+            "w",
+            encoding="utf-8"
+        ) as f:
+
+            json.dump(
+                data,
+                f,
+                ensure_ascii=False,
+                indent=2,
+            )
 
     @classmethod
-    def cargar_estado(cls, archivo: str) -> "SistemaGestionTurnos":
-        """Restaura el estado desde JSON."""
-        ruta = Path(archivo)
-        if not ruta.exists():
-            raise FileNotFoundError(f"No existe el archivo: {archivo}")
+    def cargar_estado(cls, archivo):
 
-        with ruta.open("r", encoding="utf-8") as f:
+        ruta = Path(archivo)
+
+        with ruta.open(
+            "r",
+            encoding="utf-8"
+        ) as f:
+
             data = json.load(f)
 
-        instancia = cls(data["nombre_servicio"])
-        instancia._contador_normal = int(data.get("contador_normal", 0))
-        instancia._contador_prioritario = int(data.get("contador_prioritario", 0))
-        instancia._cola_normal = deque(data.get("cola_normal", []))
-        instancia._cola_prioritaria = deque(data.get("cola_prioritaria", []))
-        instancia._historial_atendidos = data.get("historial_atendidos", [])
-        return instancia
+        sistema = cls(
+            data["nombre_servicio"]
+        )
+
+        sistema._contador = data["contador"]
+
+        sistema._cola_alta = deque(
+            data["cola_alta"]
+        )
+
+        sistema._cola_media = deque(
+            data["cola_media"]
+        )
+
+        sistema._cola_baja = deque(
+            data["cola_baja"]
+        )
+
+        sistema._historial_atendidos = data["historial"]
+
+        return sistema
